@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiProperty } from '@nestjs/swagger';
-
+const db = require('../../models')
 
 class CreatePostDto {
   @ApiProperty({
@@ -38,12 +38,40 @@ class ByIdPostDto {
 @Controller('post')
 @ApiTags('帖子')
 export class PostController {
+
   @Get()
   @ApiOperation({
     summary: '显示帖子列表'
   })
-  index() {
-    return []
+  async index() {
+    const data = await db.Articles.findAll({
+      include: [
+        {
+          model: db.Categories,
+          attributes: ['id', 'name'],
+        },
+        {
+          model: db.User,
+          attributes: ['id', 'nickname', 'avatar', 'gender'],
+        },
+        {
+          model: db.Comments,
+          attributes: ['id', 'content', 'userId', 'createdAt', 'updatedAt'],
+          include: [
+            {
+              model: db.User,
+              attributes: ['id', 'nickname', 'avatar', 'gender'],
+            },
+          ],
+        },
+      ],
+      order: [['updatedAt', 'DESC']],
+    })
+    return {
+      code: 200,
+      data,
+      msg: 'success'
+    }
   }
 
   @Post()
